@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070b14">
+<meta name="description" content="Interactive fan tribute to the second-generation Tesla Roadster — Thrust launch, Rocket hover, barrel roll, 3D studio. Unofficial.">
+<title>Tesla Roadster · Liftoff — Interactive Tribute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="boot" aria-hidden="true">
+  <div class="bt">PRE-LAUNCH CHECK</div>
+  <div class="bn">GO FOR <em>LAUNCH</em></div>
+  <div id="bootbar"><i></i></div>
+  <div id="bootpct">N₂ 0%</div>
+</div>
+
+<div id="bar"></div><div id="cur"></div>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="studio-badge">3D STUDIO · DRAG TO ORBIT · C TO EXIT</div>
+
+<header>
+  <a class="brand" href="#top"><i></i>ROADSTER <small>TESLA</small></a>
+  <nav>
+    <a href="#performance">Performance</a><a href="#rocket">Rocket</a><a href="#trims">Trims</a>
+    <a href="#colors">Finishes</a><a href="#story">Story</a>
+    <a class="btn" href="#reserve">Reserve</a>
+  </nav>
+</header>
+
+<div id="hud" aria-hidden="true">
+  <span class="trim" id="hudTrim">THRUST</span>
+  <span class="mode" id="hudMode">PARK</span>
+  <b><span id="hudKmh">0</span><small> km/h</small></b>
+  <span id="hudMph">0 mph · 0.0 g</span>
+  <div class="n2"><i id="hudN2"></i></div>
+  <span>N₂ <span id="hudN2pct">100</span>% · <span class="t60" id="hudT60">0–60 · —</span></span>
+</div>
+
+<div id="dock" role="toolbar" aria-label="Car controls">
+  <button type="button" id="dStudio" aria-pressed="false">STUDIO<kbd>C</kbd></button>
+  <button type="button" id="dLaunch" aria-pressed="false">LAUNCH<kbd>L</kbd></button>
+  <button type="button" id="dTrack" aria-pressed="false">TRACK<kbd>T</kbd></button>
+  <button type="button" id="dRocket" aria-pressed="false">ROCKET<kbd>X</kbd></button>
+  <button type="button" id="dRoll">BARREL ROLL<kbd>B</kbd></button>
+  <button type="button" id="dRefill">REFILL N₂<kbd>N</kbd></button>
+  <button type="button" id="dSpin">360°<kbd>0</kbd></button>
+  <button type="button" id="dSound" aria-pressed="false">SOUND<kbd>S</kbd></button>
+</div>
+<button type="button" id="dockToggle">HIDE (H)</button>
+
+<!-- Studio tool panel (ported from the AERO 3D studio) -->
+<div id="studioPanel" role="toolbar" aria-label="3D studio controls">
+  <div class="sp-group">
+    <span class="sp-label">EXPLODE</span>
+    <input id="explode" type="range" min="0" max="1" step="0.01" value="0" aria-label="Exploded view amount">
+    <span class="sp-val" id="explodePct">0%</span>
+  </div>
+  <div class="seg" role="group" aria-label="Camera presets">
+    <button type="button" class="preset on" data-preset="hero">HERO ¾</button>
+    <button type="button" class="preset" data-preset="profile">PROFILE</button>
+    <button type="button" class="preset" data-preset="top">TOP</button>
+    <button type="button" class="preset" data-preset="canopy">CANOPY</button>
+  </div>
+  <div class="sp-group">
+    <button type="button" id="chipAirflow" class="sp-chip on" aria-pressed="true">AIRFLOW</button>
+    <button type="button" id="chipOrbit" class="sp-chip on gold" aria-pressed="true">AUTO-ORBIT</button>
+    <button type="button" id="chipReset" class="sp-chip">RESET VIEW</button>
+  </div>
+  <span class="sp-hint">drag · zoom · click a part to inspect</span>
+</div>
+
+<!-- Subsystem inspector -->
+<div id="inspector" role="status">
+  <button type="button" id="insClose">CLOSE ✕</button>
+  <div class="meta"><b>SUBSYSTEM</b><span>·</span><span id="insSpec"></span></div>
+  <h3 id="insTitle"></h3>
+  <p id="insDesc"></p>
+</div>
+
+<main id="top">
+
+  <!-- 0 · HERO -->
+  <section class="panel" data-pose="0">
+    <div class="copy">
+      <p class="eyebrow"><b>TESLA</b> · SECOND GENERATION · REVEALED 15 OCT 2026 · McGREGOR, TX</p>
+      <h1><span><b>The sky is </b></span><span style="font-size: 3rem;"><b>no longer the limit </b></span></h1>
+      <p class="lead">Nine years of promises. Then it drove upside down, barrel-rolled over a row of cars, and landed —
+        on SpaceX cold-gas thrusters. This is an interactive fan tribute to the real second-gen Tesla Roadster.</p>
+      <div class="row">
+        <button class="btn solid mag" id="launch">Ignite Thrust</button>
+        <button class="btn mag" id="studioBtn">Open 3D Studio</button>
+        <a class="btn ghost mag" href="#rocket">Watch it fly</a>
+      </div>
+      <div class="chips">
+        <span class="chip"><b>C</b> studio</span><span class="chip"><b>L</b> launch</span>
+        <span class="chip"><b>T</b> track</span><span class="chip"><b>X</b> rocket</span>
+        <span class="chip"><b>B</b> barrel roll</span><span class="chip"><b>N</b> refill N₂</span>
+      </div>
+      <div id="poster" aria-label="Tesla Roadster side view illustration">
+        <svg viewBox="0 0 560 220" role="img">
+          <g transform="translate(280,168) scale(96,-96)">
+            <path d="M-2.12,.22 L1.98,.22 Q2.3,.24 2.34,.4 Q2.28,.52 1.86,.56 Q1.05,.64 .45,.7 Q-.7,.77 -1.55,.77 Q-1.98,.77 -2.16,.66 Q-2.3,.55 -2.26,.38 Z" fill="#e8eaec"/>
+            <path d="M.55,.68 Q.1,1.02 -.4,1.08 Q-.75,1.1 -1.05,1.04 Q-1.45,.95 -1.7,.72 Z" fill="#b98a2e" opacity=".9"/>
+            <circle cx="1.48" cy=".34" r=".34" fill="#111318"/><circle cx="1.48" cy=".34" r=".18" fill="#b9bdc6"/>
+            <circle cx="-1.48" cy=".34" r=".34" fill="#111318"/><circle cx="-1.48" cy=".34" r=".18" fill="#b9bdc6"/>
+            <rect x="-2.32" y=".56" width=".06" height=".05" fill="#e82127"/>
+            <rect x="2.28" y=".4" width=".06" height=".04" fill="#ffffff"/>
+          </g>
+          <line x1="20" y1="168" x2="540" y2="168" stroke="#1c2740" stroke-width="2"/>
+        </svg>
+        <p class="note">3D is unavailable here — static mode. All the facts still work.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div>
+    <span>0–60 mph · 0.81 s*</span><span>1,341 hp</span><span>2 g suction</span><span>10 cold-gas thrusters</span>
+    <span>500 kW charging</span><span>Barrel roll · demonstrated</span><span>Production · 2028 targeted</span>
+    <span>0–60 mph · 0.81 s*</span><span>1,341 hp</span><span>2 g suction</span><span>10 cold-gas thrusters</span>
+    <span>500 kW charging</span><span>Barrel roll · demonstrated</span><span>Production · 2028 targeted</span>
+  </div></div>
+
+  <!-- 1 · PERFORMANCE -->
+  <section class="panel r" id="performance" data-pose="1">
+    <div class="copy">
+      <p class="eyebrow">01 — LAUNCH CONTROL</p>
+      <h2>Sub-second.<br>Sub-belief.</h2>
+      <div class="stats">
+        <div class="stat"><strong data-v="0.81" data-d="2">0<small>sec</small></strong><span>0–60 mph, Thrust trim (Tesla-measured)</span></div>
+        <div class="stat"><strong data-v="1341">0<small>hp</small></strong><span>Dual rear motors, one per wheel</span></div>
+        <div class="stat"><strong data-v="370">0<small>+ km/h</small></strong><span>Top speed claim (230+ mph)</span></div>
+        <div class="stat"><strong data-v="510">0<small>km</small></strong><span>Range claim · 310–320 mi</span></div>
+      </div>
+      <div class="timerstrip">
+        <div class="tl"><span>0 → 60 MPH</span><b id="stripT60">ARMED</b></div>
+        <div class="tbar"><i id="stripFill"></i></div>
+      </div>
+      <div class="row" style="margin-top:22px">
+        <button class="btn solid mag" id="launch2">Run it</button>
+      </div>
+      <p class="note">*Tesla-announced claims from the 15 Oct 2026 reveal; not independently verified.
+        Simulation pacing is illustrative. 10–80% charge in ~10 min at 500+ kW.</p>
+    </div>
+  </section>
+
+  <!-- 2 · ENGINEERING -->
+  <section class="panel" id="engineering" data-pose="2">
+    <div class="copy">
+      <p class="eyebrow">02 — ENGINEERING</p>
+      <h2>Built like<br>a spacecraft.</h2>
+      <ul class="feat">
+        <li><h3>Dual-motor RWD, torque vectoring</h3><p>One motor per rear wheel on an 800–1,000 V pack. Over 1,000 kW. The 2017 tri-motor AWD plan is gone — this is the new recipe.</p></li>
+        <li><h3>Multi-mode suction fan</h3><p>Pulls air from under the car — enough downforce to hold it upside down, even parked. 2 g cornering claimed. Press <b>T</b> for Track mode.</p></li>
+        <li><h3>Aerospace materials</h3><p>Magnesium, titanium, carbon fiber. Target weight under 1,700 kg. Ano White paint borrowed from rocket protection tech.</p></li>
+        <li><h3>Yoke + gold visor glass</h3><p>Steer-by-wire yoke, ultra-white interior, and tinted glass that mimics the gold coating on spacesuit visors. Open the Studio (<b>C</b>) to explode the car and inspect every part.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 · ROCKET -->
+  <section class="panel r" id="rocket" data-pose="3">
+    <div class="copy">
+      <p class="eyebrow">03 — SPACEX PACKAGE, BUT REAL</p>
+      <h2>Yes, it<br>actually flies.</h2>
+      <p class="lead">The Thrust trim hides four rear nozzles fed by a 200-litre nitrogen tank at 10,000 psi —
+        about five seconds of thrust per fill. The invite-only Rocket trim adds six more around the perimeter.
+        It hops. It barrel-rolls. It is not street legal.</p>
+      <div class="row">
+        <button class="btn solid mag" id="rocketBtn">Engage Rocket</button>
+        <button class="btn mag" id="rollBtn">Barrel roll</button>
+        <button class="btn ghost mag" id="refillBtn">Refill N₂</button>
+      </div>
+      <div class="gauge">
+        <div class="gl"><span>N₂ PRESSURE · 10,000 PSI</span><b id="gaugePct">100%</b></div>
+        <div class="gbar"><i id="gaugeFill"></i></div>
+      </div>
+      <p class="note">One real fill ≈ 5 s of thrust; refills currently take 2–6 hours. Here, refills are instant — enjoy.</p>
+    </div>
+  </section>
+
+  <!-- 4 · TRIMS -->
+  <section class="panel c" id="trims" data-pose="4" style="align-items:center">
+    <div class="copy" style="max-width:none;text-align:center">
+      <p class="eyebrow">04 — CONFIGURE</p>
+      <h2>Pick your physics.</h2>
+      <p class="lead" style="margin:0 auto">Three announced trims. Selecting one here changes what the car above can actually do.</p>
+      <div class="cards" role="group" aria-label="Trim selector">
+        <button type="button" class="card" data-trim="performance" aria-pressed="false">
+          <span class="sel">SELECTED</span><span class="tag">BY RESERVATION</span>
+          <h3>Performance</h3><p class="sub">Road ready · seats for two</p>
+          <ul><li>Active aerodynamics</li><li>Multi-mode suction system</li><li>Motor-only launch (no thrusters)</li></ul>
+        </button>
+        <button type="button" class="card" data-trim="thrust" aria-pressed="true">
+          <span class="sel">SELECTED</span><span class="tag">LIMITED RELEASE</span>
+          <h3>Thrust</h3><p class="sub">Race ready · seats for two</p>
+          <ul><li>4 rear cold-gas thrusters</li><li>0–60 mph under 1 second</li><li>200 L N₂ COPV · ~5 s per fill</li></ul>
+        </button>
+        <button type="button" class="card" data-trim="rocket" aria-pressed="false">
+          <span class="sel">SELECTED</span><span class="tag">INVITE ONLY</span>
+          <h3>Rocket</h3><p class="sub">Air ready · seats for one</p>
+          <ul><li>10 perimeter thrusters</li><li>Forward + upward thrust</li><li>Not approved for public roads</li></ul>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · FINISHES -->
+  <section class="panel r" id="colors" data-pose="5">
+    <div class="copy">
+      <p class="eyebrow">05 — FINISHES</p>
+      <h2>Paint the rocket.</h2>
+      <div class="swatches" role="group" aria-label="Body colour">
+        <button type="button" class="sw" style="--c:#e8eaec" data-c="#e8eaec" data-a="#f5b942" data-n="Ano White" data-official="1" aria-label="Ano White" aria-pressed="true"></button>
+        <button type="button" class="sw" style="--c:#b0121b" data-c="#b0121b" data-a="#ff5a4d" data-n="Ultra Red" aria-label="Ultra Red (fan finish)" aria-pressed="false"></button>
+        <button type="button" class="sw" style="--c:#565b63" data-c="#565b63" data-a="#aebfd6" data-n="Stealth Grey" aria-label="Stealth Grey (fan finish)" aria-pressed="false"></button>
+        <button type="button" class="sw" style="--c:#16305e" data-c="#16305e" data-a="#5aa0ff" data-n="Midnight Blue" aria-label="Midnight Blue (fan finish)" aria-pressed="false"></button>
+        <button type="button" class="sw" style="--c:#121317" data-c="#121317" data-a="#e8c06a" data-n="Carbon Black" aria-label="Carbon Black (fan finish)" aria-pressed="false"></button>
+      </div>
+      <p id="cname">Ano White <small>OFFICIAL</small></p>
+      <p class="lead">Ano White is the real reveal finish — UV and cryogenic protection, straight from rocket science.
+        The rest are fan-imagined. Move your mouse to tilt the car, spin it 360°, or open the Studio to orbit freely.</p>
+      <div class="row"><button class="btn mag" id="spinBtn">Spin 360°</button><button class="btn ghost mag" id="studioBtn2">Explode it in the Studio</button></div>
+    </div>
+  </section>
+
+  <!-- 6 · STORY -->
+  <section class="panel" id="story" data-pose="6">
+    <div class="copy">
+      <p class="eyebrow">06 — THE LONG ROAD</p>
+      <h2>Nine years<br>of “next year”.</h2>
+      <ul class="timeline">
+        <li><span class="yr">NOV 2017</span><h3>The original promise</h3><p>Driven out of a Semi trailer: 1.9 s 0–60, 620 mi range, 200 kWh, tri-motor AWD, 2+2 seats, glass roof. $200k base, $250k Founders.</p></li>
+        <li><span class="yr">2018 → 2025</span><h3>The SpaceX tease & the delays</h3><p>Cold-gas thruster option announced. Production slipped: 2020, 2022, 2023, 2024, 2025… then “April 1, 2026.”</p></li>
+        <li><span class="yr">15 OCT 2026</span><h3>McGregor, Texas</h3><p>A driverless Roadster with a spacesuit-clad mannequin drove upside down, barrel-rolled over other Teslas, and landed. New design, three trims, 0.81 s measured.</p></li>
+        <li><span class="yr">2028</span><h3>Production target — again</h3><p>Giga Texas. $50,000 refundable deposit. Price still unannounced. “Success is not guaranteed,” Musk admitted before the demo.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 7 · RESERVE -->
+  <section class="panel c" id="reserve" data-pose="7">
+    <div class="copy" style="max-width:640px">
+      <p class="eyebrow">07 — COUNTDOWN</p>
+      <h2>Join the countdown.</h2>
+      <p class="lead" style="margin:0 auto">This fan page can’t take your $50,000 — but it can take your email for pretend launch updates.</p>
+      <form id="form">
+        <input type="email" id="email" placeholder="you@example.com" required aria-label="Email address">
+        <button class="btn solid mag" type="submit">Keep me posted</button>
+      </form>
+      <p id="msg" role="status"></p>
+      <p class="note">For the real reservation, go to <a href="https://www.tesla.com/roadster" target="_blank" rel="noopener">tesla.com/roadster ↗</a></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p><strong>Unofficial fan-made tribute.</strong> Not affiliated with Tesla, Inc. or SpaceX. All performance figures are
+     Tesla-announced claims from the 15 October 2026 reveal and have not been independently verified. Flight features
+     shown here are a stylised simulation.</p>
+  <p>Sources: <a href="https://www.tesla.com/roadster" target="_blank" rel="noopener">tesla.com/roadster</a> ·
+     <a href="https://insideevs.com/news/812151/2027-tesla-roadster-price-specs-release-date/" target="_blank" rel="noopener">InsideEVs</a> ·
+     <a href="https://en.wikipedia.org/wiki/Tesla_Roadster_(second_generation)" target="_blank" rel="noopener">Wikipedia</a></p>
+</footer>
+
+<noscript><p style="padding:20px 6vw">This tribute needs JavaScript for the 3D scene.</p></noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="script.js">
+
+</script>
+</body>
+</html>
